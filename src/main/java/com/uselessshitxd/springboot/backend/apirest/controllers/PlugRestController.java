@@ -1,19 +1,16 @@
 package com.uselessshitxd.springboot.backend.apirest.controllers;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import com.uselessshitxd.springboot.backend.apirest.entity.Plug;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
-import org.springframework.validation.FieldError;
-import org.springframework.validation.ObjectError;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -25,46 +22,45 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.uselessshitxd.springboot.backend.apirest.entity.Cliente;
-import com.uselessshitxd.springboot.backend.apirest.services.IClienteService;
+import com.uselessshitxd.springboot.backend.apirest.services.IPlugService;
 
 import jakarta.validation.Valid;
 
 @CrossOrigin(origins = { "http://localhost:4200" })
 @RestController
 @RequestMapping("/api")
-public class ClienteRestController {
+public class PlugRestController {
 
 	@Autowired
-	private IClienteService clienteService;
+	private IPlugService plugService;
 
-	@GetMapping("/clientes")
-	public List<Cliente> index() {
-		return clienteService.findAll();
+	@GetMapping("/plugs")
+	public List<Plug> index() {
+		return plugService.findAll();
 	}
 
-	@GetMapping("/clientes/{id}")
+	@GetMapping("/plugs/{id}")
 	public ResponseEntity<?> show(@PathVariable Long id) {
-		Cliente cliente = null;
+		Plug plug = null;
 		Map<String, Object> response = new HashMap<>();
 		try {
-			cliente = clienteService.findById(id);
+			plug = plugService.findById(id);
 		} catch (DataAccessException e) {
 			response.put("mensaje", "Error al realizar la consulta a base de datos");
 			response.put("error", e.getMessage().concat(": ").concat(e.getMostSpecificCause().getMessage()));
 			return new ResponseEntity<Map<String, Object>>(response, HttpStatus.INTERNAL_SERVER_ERROR);
 		}
 
-		if (cliente == null) {
-			response.put("mensaje", "El cliente ID; ".concat(id.toString().concat(" no existe en la base de datos!")));
+		if (plug == null) {
+			response.put("mensaje", "El plug ID; ".concat(id.toString().concat(" no existe en la base de datos!")));
 			return new ResponseEntity<Map<String, Object>>(response, HttpStatus.NOT_FOUND);
 		}
-		return new ResponseEntity<Cliente>(cliente, HttpStatus.OK);
+		return new ResponseEntity<Plug>(plug, HttpStatus.OK);
 	}
 
-	@PostMapping("/clientes")
-	public ResponseEntity<?> create(@Valid @RequestBody Cliente cliente, BindingResult result) {
-		Cliente clienteNew = null;
+	@PostMapping("/plugs")
+	public ResponseEntity<?> create(@Valid @RequestBody Plug plug, BindingResult result) {
+		Plug plugNew = null;
 		Map<String, Object> response = new HashMap<>();
 
 		if (result.hasErrors()) {
@@ -76,22 +72,22 @@ public class ClienteRestController {
 		}
 
 		try {
-			clienteNew = clienteService.save(cliente);
+			plugNew = plugService.save(plug);
 		} catch (DataAccessException e) {
 			response.put("mensaje", "Error al realizar la insercion a base de datos");
 			response.put("error", e.getMessage().concat(": ").concat(e.getMostSpecificCause().getMessage()));
 			return new ResponseEntity<Map<String, Object>>(response, HttpStatus.INTERNAL_SERVER_ERROR);
 		}
-		response.put("mensaje", "El cliente ha sido creado con exito!!");
-		response.put("cliente", clienteNew);
+		response.put("mensaje", "El plug ha sido creado con exito!!");
+		response.put("plug", plugNew);
 		return new ResponseEntity<Map<String, Object>>(response, HttpStatus.CREATED);
 	}
 
-	@PutMapping("/clientes/{id}")
+	@PutMapping("/plugs/{id}")
 	@ResponseStatus(HttpStatus.CREATED)
-	public ResponseEntity<?> update(@Valid @RequestBody Cliente cliente, BindingResult result, @PathVariable Long id) {
-		Cliente clienteActual = clienteService.findById(id);
-		Cliente clienteUpdated = null;
+	public ResponseEntity<?> update(@Valid @RequestBody Plug plug, BindingResult result, @PathVariable Long id) {
+		Plug plugActual = plugService.findById(id);
+		Plug plugUpdated = null;
 		Map<String, Object> response = new HashMap<>();
 		if (result.hasErrors()) {
 			List<String> errors = result.getFieldErrors().stream()
@@ -100,19 +96,18 @@ public class ClienteRestController {
 			response.put("errors", errors);
 			return new ResponseEntity<Map<String, Object>>(response, HttpStatus.BAD_REQUEST);
 		}
-		if (clienteActual == null) {
-			response.put("mensaje", "Error: no se pudo editar, el cliente ID: "
+		if (plugActual == null) {
+			response.put("mensaje", "Error: no se pudo editar, el enchufe ID: "
 					.concat(id.toString().concat(" no existe en la base de datos!")));
 			return new ResponseEntity<Map<String, Object>>(response, HttpStatus.NOT_FOUND);
 		}
 
 		try {
-			clienteActual.setNombre(cliente.getNombre());
-			clienteActual.setApellido(cliente.getApellido());
-			clienteActual.setEmail(cliente.getEmail());
-			clienteActual.setCreateAt(cliente.getCreateAt());
+			plugActual.setId(plug.getId());
+			plugActual.setMac(plug.getMac());
+			plugActual.setEstado(plug.getEstado());
 
-			clienteUpdated = clienteService.save(clienteActual);
+			plugUpdated = plugService.save(plugActual);
 
 		} catch (DataAccessException e) {
 			response.put("mensaje", "Error al realizar la insercion a base de datos");
@@ -120,24 +115,24 @@ public class ClienteRestController {
 
 			return new ResponseEntity<Map<String, Object>>(response, HttpStatus.INTERNAL_SERVER_ERROR);
 		}
-		response.put("mensaje", "El cliente ha sido actualizado con exito!!");
-		response.put("cliente", clienteUpdated);
+		response.put("mensaje", "El plug ha sido actualizado con exito!!");
+		response.put("plug", plugUpdated);
 
 		return new ResponseEntity<Map<String, Object>>(response, HttpStatus.CREATED);
 	}
 
-	@DeleteMapping("/clientes/{id}")
+	@DeleteMapping("/plugs/{id}")
 	public ResponseEntity<?> delete(@PathVariable Long id) {
 		Map<String, Object> response = new HashMap<>();
 		try {
-			clienteService.delete(id);
+			plugService.delete(id);
 		} catch (DataAccessException e) {
 			response.put("mensaje", "Error al realizar la insercion a base de datos");
 			response.put("error", e.getMessage().concat(": ").concat(e.getMostSpecificCause().getMessage()));
 
 			return new ResponseEntity<Map<String, Object>>(response, HttpStatus.INTERNAL_SERVER_ERROR);
 		}
-		response.put("mensaje", "El cliente ha sido eliminado con exito");
+		response.put("mensaje", "El enchufe ha sido eliminado con exito");
 		return new ResponseEntity<Map<String, Object>>(response, HttpStatus.OK);
 	}
 }
